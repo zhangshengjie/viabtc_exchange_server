@@ -101,3 +101,22 @@ Example response: `{"code": 0, "message": null, "data": {"user_id": 1}}`
 * BTC/BCH: 1LB34q942fRN8ukMoaLJNWBjm5erZccgUb
 * ETH: 0xd6938fcad9aa20de7360ce15090ec2e036867f27
 
+build on ubuntu18 lts
+
+sudo apt install -y git build-essential libev-dev libjansson-dev libmpdec-dev libmysqlclient-dev libcurl4-gnutls-dev libldap2-dev libgss-dev librtmp-dev libsasl2-dev libssl-dev python libnghttp2-dev libpsl-dev libhiredis-dev
+
+wget https://github.com/edenhill/librdkafka/archive/v0.11.3.tar.gz -O librdkafka-0.11.3.tar.gz && tar zxf librdkafka-0.11.3.tar.gz && cd librdkafka-0.11.3 && ./configure && make
+sudo make install
+
+
+cd viabtc_exchange_server
+
+make -C depends/hiredis
+make -C network
+make -C utils
+make -C accesshttp 
+make -C accessws
+make -C alertcenter
+make -C marketprice
+make -C matchengine
+make -C readhistory
