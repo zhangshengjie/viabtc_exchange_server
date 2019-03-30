@@ -6,6 +6,8 @@
 # include <stdlib.h>
 # include <string.h>
 # include "ut_dict.h"
+#include <stdio.h>
+#include <errno.h>
 
 /* fnv hash */
 uint32_t dict_generic_hash_function(const void *data, size_t len)
@@ -65,13 +67,21 @@ static uint32_t dict_next_power(uint32_t size)
 
 dict_t *dict_create(dict_types *type, uint32_t init_size)
 {
-    if (type->hash_function == NULL)
+    printf("dict_t *dict_create Line:%d\n",__LINE__);
+    if (type->hash_function == NULL){
+        printf("dict_t *dict_create Line:%d\n",__LINE__);
         return NULL;
-    if (type->key_compare == NULL)
+    }
+    if (type->key_compare == NULL){
+        printf("dict_t *dict_create Line:%d\n",__LINE__);
         return NULL;
+    }
+    printf("dict_t *dict_create Line:%d\n",__LINE__);
     dict_t *dt = malloc(sizeof(dict_t));
-    if (dt == NULL)
+    if (dt == NULL){
+        printf("dict_t *dict_create Line:%d\n",__LINE__); 
         return NULL;
+    }
     memset(dt, 0, sizeof(dict_t));
     memcpy(&dt->type, type, sizeof(dict_types));
     dt->size = dict_next_power(init_size);
@@ -79,6 +89,7 @@ dict_t *dict_create(dict_types *type, uint32_t init_size)
     dt->used = 0;
     dt->table = calloc(dt->size, sizeof(dict_entry *));
     if (dt->table == NULL) {
+        printf("dict_t *dict_create Line:%d\n",__LINE__);
         free(dt);
         return NULL;
     }

@@ -46,7 +46,9 @@ redis_sentinel_t *redis_sentinel_create(redis_sentinel_cfg *cfg)
         return NULL;
     memset(context, 0, sizeof(redis_sentinel_t));
     context->db = cfg->db;
+    printf("context->db:%d\n",context->db);
     context->name = strdup(cfg->name);
+    printf("context->name:%s\n",context->name);
     if (context->name == NULL) {
         free(context);
         return NULL;
@@ -61,6 +63,9 @@ redis_sentinel_t *redis_sentinel_create(redis_sentinel_cfg *cfg)
         memset(node, 0, sizeof(redis_sentinel_node));
         node->addr.host = strdup(cfg->addr_arr[i].host);
         node->addr.port = cfg->addr_arr[i].port;
+        
+    printf("node->addr.host:%s\n",node->addr.host); 
+    printf("node->addr.port:%d\n",node->addr.port);
         if (node->addr.host == NULL) {
             free(node);
             redis_sentinel_release(context);
@@ -98,6 +103,11 @@ int redis_sentinel_get_master_addr(redis_sentinel_t *context, redis_addr *addr)
             curr = curr->next;
             continue;
         }
+		
+		redisReply *reply1;
+		reply1 = redisCommand(redis, "AUTH ABCD_abcd");
+		freeReplyObject(reply1);
+		
         redisReply *reply = redisCommand(redis, "SENTINEL get-master-addr-by-name %s", context->name);
         if (reply == NULL || reply->type != REDIS_REPLY_ARRAY || reply->elements != 2) {
             if (reply) {
@@ -143,6 +153,11 @@ int redis_sentinel_get_slave_addr(redis_sentinel_t *context, redis_addr *addr)
             curr = curr->next;
             continue;
         }
+		
+		redisReply *reply1;
+		reply1 = redisCommand(redis, "AUTH ABCD_abcd");
+		freeReplyObject(reply1);
+		
         redisReply *reply = redisCommand(redis, "SENTINEL slaves %s", context->name);
         if (reply == NULL || reply->type != REDIS_REPLY_ARRAY) {
             if (reply) {
@@ -184,10 +199,14 @@ int redis_sentinel_get_slave_addr(redis_sentinel_t *context, redis_addr *addr)
 
 redisContext *redis_sentinel_connect_master(redis_sentinel_t *context)
 {
+    printf("redisContext *redis_sentinel_connect_master:%d\n",__LINE__);
     for (int i = 0; i < 3; ++i) {
+        printf("redisContext *redis_sentinel_connect_master:%d\n",__LINE__);
         redis_addr addr;
-        if (redis_sentinel_get_master_addr(context, &addr) < 0)
+        if (redis_sentinel_get_master_addr(context, &addr) < 0){
+            printf("redisContext *redis_sentinel_connect_master:%d\n",__LINE__);
             return NULL;
+        }
 
         struct timeval timeout = { 3, 0 };
         redisContext *redis = redisConnectWithTimeout(addr.host, addr.port, timeout);
@@ -196,10 +215,15 @@ redisContext *redis_sentinel_connect_master(redis_sentinel_t *context)
                 redisFree(redis);
             }
             free(addr.host);
+            printf("redisContext *redis_sentinel_connect_master:%d\n",__LINE__);
             return NULL;
         }
         free(addr.host);
         redisSetTimeout(redis, timeout);
+		
+		redisReply *reply1;
+		reply1 = redisCommand(redis, "AUTH ABCD_abcd");
+		freeReplyObject(reply1);
 
         redisReply *reply = redisCommand(redis, "ROLE");
         if (reply == NULL || reply->type != REDIS_REPLY_ARRAY) {
@@ -207,6 +231,7 @@ redisContext *redis_sentinel_connect_master(redis_sentinel_t *context)
                 freeReplyObject(reply);
             }
             redisFree(redis);
+            printf("redisContext *redis_sentinel_connect_master:%d\n",__LINE__);
             return NULL;
         }
         if (strcmp(reply->element[0]->str, "master") != 0) {
@@ -223,6 +248,7 @@ redisContext *redis_sentinel_connect_master(redis_sentinel_t *context)
                     freeReplyObject(reply);
                 }
                 redisFree(redis);
+                printf("redisContext *redis_sentinel_connect_master:%d\n",__LINE__);
                 return NULL;
             }
             freeReplyObject(reply);
@@ -230,7 +256,7 @@ redisContext *redis_sentinel_connect_master(redis_sentinel_t *context)
 
         return redis;
     }
-
+    printf("redisContext *redis_sentinel_connect_master:%d\n",__LINE__);
     return NULL;
 }
 
@@ -252,6 +278,10 @@ redisContext *redis_sentinel_connect_slave(redis_sentinel_t *context)
         }
         free(addr.host);
         redisSetTimeout(redis, timeout);
+		
+		redisReply *reply1;
+		reply1 = redisCommand(redis, "AUTH ABCD_abcd");
+		freeReplyObject(reply1);
 
         redisReply *reply = redisCommand(redis, "ROLE");
         if (reply == NULL || reply->type != REDIS_REPLY_ARRAY) {

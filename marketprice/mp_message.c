@@ -9,6 +9,8 @@
 # include "mp_message.h"
 # include "mp_kline.h"
 
+#include <errno.h>
+
 struct market_info {
     char   *name;
     mpd_t  *last;
@@ -341,25 +343,40 @@ cleanup:
 }
 
 static int init_market(void)
-{
+{ 
     dict_types type;
     memset(&type, 0, sizeof(type));
     type.hash_function = dict_sds_key_hash_func;
     type.key_compare = dict_sds_key_compare;
     type.key_destructor = dict_sds_key_free;
+	
     dict_market = dict_create(&type, 64);
-    if (dict_market == NULL)
+	
+	printf("int static int init_market(void):%d\n",__LINE__);
+	
+	printf ("dict_market = dict_create(&type, 64); error: %s\n",strerror(errno));
+    if (dict_market == NULL){
+		printf("dict_market == NULL\n");
         return -__LINE__;
+    }
 
+	printf("int static int init_market(void):%d\n",__LINE__);
     redisContext *context = redis_sentinel_connect_master(redis);
-    if (context == NULL)
+    if (context == NULL){
+		printf("context == NULL\n");
         return -__LINE__;
+    }
+		
+	printf("int static int init_market(void):%d\n",__LINE__);
     json_t *r = send_market_list_req();
     if (r == NULL) {
         log_error("get market list fail");
         redisFree(context);
+		printf("r == NULL\n");
         return -__LINE__;
     }
+	
+	printf("int static int init_market(void):%d\n",__LINE__);
     for (size_t i = 0; i < json_array_size(r); ++i) {
         json_t *item = json_array_get(r, i);
         const char *name = json_string_value(json_object_get(item, "name"));
@@ -369,6 +386,7 @@ static int init_market(void)
             log_error("create market %s fail", name);
             json_decref(r);
             redisFree(context);
+			printf("info == NULL\n");
             return -__LINE__;
         }
         int ret = load_market(context, info);
@@ -376,6 +394,7 @@ static int init_market(void)
             log_error("load market %s fail: %d", name, ret);
             json_decref(r);
             redisFree(context);
+			printf("ret < 0\n");
             return -__LINE__;
         }
     }
@@ -881,15 +900,18 @@ int init_message(void)
         return -__LINE__;
     ret = init_market();
     if (ret < 0) {
+		printf("log:init_market:%d\n",ret);
         return ret;
     }
     last_offset = get_message_offset();
     if (last_offset < 0) {
+		printf("last_offset:%d",__LINE__);
         return -__LINE__;
     }
     settings.deals.offset = last_offset + 1;
     deals = kafka_consumer_create(&settings.deals, on_deals_message);
     if (deals == NULL) {
+		printf("kafka_consumer_create:%d",__LINE__);
         return -__LINE__;
     }
 
